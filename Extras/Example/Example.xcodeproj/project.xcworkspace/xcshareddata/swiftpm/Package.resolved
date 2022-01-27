@@ -1,0 +1,25 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "Matchable",
+        "repositoryURL": "https://github.com/elegantchaos/Matchable.git",
+        "state": {
+          "branch": null,
+          "revision": "0f523c77bf4b0dbbdc0838b952262ed45fab17f8",
+          "version": "1.0.6"
+        }
+      },
+      {
+        "package": "XCTestExtensions",
+        "repositoryURL": "https://github.com/elegantchaos/XCTestExtensions.git",
+        "state": {
+          "branch": null,
+          "revision": "695ac254d74387c8ec1796e2299a7d8bdc33822d",
+          "version": "1.4.2"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
