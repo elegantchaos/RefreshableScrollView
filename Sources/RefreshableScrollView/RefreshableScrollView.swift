@@ -22,18 +22,25 @@ extension Double {
 }
 
 public struct RefreshableScrollView<Content: View>: View {
+    @Environment(\.refresh) var refreshAction
+
     @State private var previousScrollOffset: CGFloat = 0
     @State private var scrollOffset: CGFloat = 0
     @State private var frozen: Bool = false
     @State private var percentage: Double = 0
-    @Environment(\.refresh) var refreshAction
     
-    var threshold: CGFloat = 80
+    /// How far the user must drag before refreshing starts.
+    var travelDistance: CGFloat
+    
+    /// The offset of the indicator view from the top of the content.
+    var activityOffset: CGFloat
+    
     @State var refreshing: Bool = false
     let content: Content
     
-    public init(height: CGFloat = 80, @ViewBuilder content: () -> Content) {
-        self.threshold = height
+    public init(travelHeight: CGFloat = 80, activityOffset: CGFloat? = nil, @ViewBuilder content: () -> Content) {
+        self.travelDistance = travelHeight
+        self.activityOffset = activityOffset ?? travelHeight
         self.content = content()
     }
     
@@ -43,19 +50,19 @@ public struct RefreshableScrollView<Content: View>: View {
                 ZStack(alignment: .top) {
                     MovingView()
                     
-                    VStack { self.content }.alignmentGuide(.top, computeValue: { d in (self.refreshing && self.frozen) ? -self.threshold : 0.0 })
+                    VStack { self.content }.alignmentGuide(.top, computeValue: { d in (self.refreshing && self.frozen) ? -self.activityOffset : 0.0 })
                     
-                    SymbolView(height: self.threshold, loading: self.refreshing, frozen: self.frozen, percentage: self.percentage)
+                    IndicatorView(height: self.activityOffset, loading: self.refreshing, frozen: self.frozen, percentage: self.percentage)
                 }
             }
             .background(FixedView())
-            .onPreferenceChange(RefreshableKeyTypes.PrefKey.self) { values in
+            .onPreferenceChange(RefreshableKey.self) { values in
                 self.refreshLogic(values: values)
             }
         }
     }
     
-    func refreshLogic(values: [RefreshableKeyTypes.PrefData]) {
+    func refreshLogic(values: [RefreshableKey.ViewBounds]) {
         DispatchQueue.main.async {
             // Calculate scroll offset
             let movingBounds = values.first { $0.vType == .movingView }?.bounds ?? .zero
@@ -63,10 +70,10 @@ public struct RefreshableScrollView<Content: View>: View {
             
             self.scrollOffset  = movingBounds.minY - fixedBounds.minY
             
-            self.percentage = min(1.0, scrollOffset / self.threshold)
+            self.percentage = min(1.0, scrollOffset / self.travelDistance)
             
             // Crossing the threshold on the way down, we start the refresh process
-            if !self.refreshing && (self.scrollOffset > self.threshold && self.previousScrollOffset <= self.threshold) {
+            if !self.refreshing && (self.scrollOffset > self.travelDistance && self.previousScrollOffset <= self.travelDistance) {
                 self.refreshing = true
                 Task {
                     await refreshAction?()
@@ -76,7 +83,7 @@ public struct RefreshableScrollView<Content: View>: View {
             
             if self.refreshing {
                 // Crossing the threshold on the way up, we add a space at the top of the scrollview
-                if self.previousScrollOffset > self.threshold && self.scrollOffset <= self.threshold {
+                if self.previousScrollOffset > self.travelDistance && self.scrollOffset <= self.travelDistance {
                     self.frozen = true
                     
                 }
@@ -90,7 +97,7 @@ public struct RefreshableScrollView<Content: View>: View {
         }
     }
     
-    struct SymbolView: View {
+    struct IndicatorView: View {
         var height: CGFloat
         var loading: Bool
         var frozen: Bool
@@ -100,7 +107,7 @@ public struct RefreshableScrollView<Content: View>: View {
         var body: some View {
             VStack {
                 Spacer()
-                ActivityRep(loading: loading)
+                CustomActivityView(animating: loading)
                     .opacity(opacity)
                     .controlSize(.large)
                 Spacer()
@@ -117,7 +124,7 @@ public struct RefreshableScrollView<Content: View>: View {
     struct MovingView: View {
         var body: some View {
             GeometryReader { proxy in
-                Color.clear.preference(key: RefreshableKeyTypes.PrefKey.self, value: [RefreshableKeyTypes.PrefData(vType: .movingView, bounds: proxy.frame(in: .global))])
+                Color.clear.preference(key: RefreshableKey.self, value: [RefreshableKey.ViewBounds(vType: .movingView, bounds: proxy.frame(in: .global))])
             }.frame(height: 0)
         }
     }
@@ -125,50 +132,8 @@ public struct RefreshableScrollView<Content: View>: View {
     struct FixedView: View {
         var body: some View {
             GeometryReader { proxy in
-                Color.clear.preference(key: RefreshableKeyTypes.PrefKey.self, value: [RefreshableKeyTypes.PrefData(vType: .fixedView, bounds: proxy.frame(in: .global))])
+                Color.clear.preference(key: RefreshableKey.self, value: [RefreshableKey.ViewBounds(vType: .fixedView, bounds: proxy.frame(in: .global))])
             }
-        }
-    }
-}
-
-struct RefreshableKeyTypes {
-    enum ViewType: Int {
-        case movingView
-        case fixedView
-    }
-    
-    struct PrefData: Equatable {
-        let vType: ViewType
-        let bounds: CGRect
-    }
-    
-    struct PrefKey: PreferenceKey {
-        static var defaultValue: [PrefData] = []
-        
-        static func reduce(value: inout [PrefData], nextValue: () -> [PrefData]) {
-            value.append(contentsOf: nextValue())
-        }
-        
-        typealias Value = [PrefData]
-    }
-}
-
-struct ActivityRep: UIViewRepresentable {
-    let loading: Bool
-    
-    func makeUIView(context: UIViewRepresentableContext<ActivityRep>) -> UIActivityIndicatorView {
-        let view = UIActivityIndicatorView()
-        view.style = .large
-        view.hidesWhenStopped = false
-        return view
-    }
-    
-    func updateUIView(_ uiView: UIActivityIndicatorView, context: UIViewRepresentableContext<ActivityRep>) {
-        print("updated")
-        if loading {
-            uiView.startAnimating()
-        } else {
-            uiView.stopAnimating()
         }
     }
 }

@@ -8,16 +8,37 @@
 import RefreshableScrollView
 import SwiftUI
 
+struct TestItem: Identifiable {
+    let id = UUID().uuidString
+}
+
+let testItems = (1..<100).map({ _ in TestItem() })
+
 struct ContentView: View {
-    struct TestItem: Identifiable {
-        let id = UUID().uuidString
-    }
     
-    let testItems = (1..<100).map({ _ in TestItem() })
     
     var body: some View {
-        VStack {
-            RefreshableScrollView {
+        TabView {
+            RefreshableExample()
+                .tabItem {
+                    Text("Custom")
+                }
+            
+            ListExample()
+                .tabItem {
+                    Text("List")
+                }
+        }
+        .padding()
+    }
+}
+
+struct RefreshableExample: View {
+    @State var text = ""
+    
+    var body: some View {
+        NavigationView {
+            RefreshableScrollView(travelHeight: 80, activityOffset: 240) {
                 VStack {
                     ForEach(testItems) { item in
                         Text(item.id)
@@ -29,23 +50,28 @@ struct ContentView: View {
                 sleep(2)
                 print("done")
             }
-
-            List {
-                ForEach(1..<100) { item in
-                    Text("\(item)")
-                }
-            }
-            .listStyle(.plain)
-            .refreshable {
-                print("refreshing")
-                sleep(2)
-                print("done")
-            }
+            .searchable(text: $text)
+            .navigationTitle("Custom View")
         }
-            .padding()
     }
 }
 
+struct ListExample: View {
+    var body: some View
+    {
+        List {
+            ForEach(1..<100) { item in
+                Text("\(item)")
+            }
+        }
+        .listStyle(.plain)
+        .refreshable {
+            print("refreshing")
+            sleep(2)
+            print("done")
+        }
+    }
+}
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
