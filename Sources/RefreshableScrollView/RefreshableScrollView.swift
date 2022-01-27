@@ -38,6 +38,8 @@ public struct RefreshableScrollView<Content: View>: View {
     @State var refreshing: Bool = false
     let content: Content
     
+    let insertActivity = false
+    
     public init(travelHeight: CGFloat = 80, activityOffset: CGFloat? = nil, @ViewBuilder content: () -> Content) {
         self.travelDistance = travelHeight
         self.activityOffset = activityOffset ?? travelHeight
@@ -50,15 +52,29 @@ public struct RefreshableScrollView<Content: View>: View {
                 ZStack(alignment: .top) {
                     MovingView()
                     
-                    VStack { self.content }.alignmentGuide(.top, computeValue: { d in (self.refreshing && self.frozen) ? -self.activityOffset : 0.0 })
+                    self.content.alignmentGuide(.top, computeValue: alignmentGuide)
                     
-                    IndicatorView(height: self.activityOffset, loading: self.refreshing, frozen: self.frozen, percentage: self.percentage)
+                    IndicatorView(height: self.activityOffset, loading: self.refreshing, frozen: self.frozen, offset: shouldOffsetIndicator, percentage: self.percentage)
                 }
             }
             .background(FixedView())
             .onPreferenceChange(RefreshableKey.self) { values in
                 self.refreshLogic(values: values)
             }
+        }
+    }
+    
+    var shouldOffsetIndicator: Bool {
+        return !insertActivity || !(refreshing && frozen)
+    }
+    
+    func alignmentGuide(dimensions: ViewDimensions) -> CGFloat {
+        if insertActivity {
+            let value = (self.refreshing && self.frozen) ? -self.activityOffset : 0.0
+            print("alignment: \(value)")
+            return value
+        } else {
+            return 0
         }
     }
     
@@ -98,26 +114,31 @@ public struct RefreshableScrollView<Content: View>: View {
     }
     
     struct IndicatorView: View {
-        var height: CGFloat
-        var loading: Bool
-        var frozen: Bool
-        var percentage: Double
-        
+        let height: CGFloat
+        let loading: Bool
+        let frozen: Bool
+        let offset: Bool
+        let percentage: Double
         
         var body: some View {
             VStack {
                 Spacer()
                 CustomActivityView(animating: loading)
                     .opacity(opacity)
-                    .controlSize(.large)
                 Spacer()
             }
             .frame(height: height).fixedSize()
-            .offset(y: -height + (self.loading && self.frozen ? height : 0.0))
+            .offset(y: offset ? -height: 0.0)
         }
         
         var opacity: Double {
-            return (percentage < .activityThreshold) ? 0.0 : (percentage - .activityThreshold) / (1.0 - .activityThreshold)
+            if loading && frozen {
+                return 1.0
+            }
+            
+            let opacity = (percentage < .activityThreshold) ? 0.0 : (percentage - .activityThreshold) / (1.0 - .activityThreshold)
+            print(opacity)
+            return opacity
         }
     }
     

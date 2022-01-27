@@ -39,7 +39,7 @@ struct RefreshableExample: View {
     var body: some View {
         NavigationView {
             RefreshableScrollView(travelHeight: 80, activityOffset: 240) {
-                VStack {
+                LazyVStack {
                     ForEach(testItems) { item in
                         Text(item.id)
                     }
@@ -52,6 +52,9 @@ struct RefreshableExample: View {
             }
             .searchable(text: $text)
             .navigationTitle("Custom View")
+            .foregroundColor(.primary)
+            .navigationBarTitleDisplayMode(.large)
+            .navigationViewStyle(.columns)
         }
     }
 }
