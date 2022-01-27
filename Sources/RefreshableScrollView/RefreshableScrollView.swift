@@ -24,6 +24,7 @@ extension Double {
 public enum RefreshableScrollMode {
     case normal
     case navigation
+    case searchableNavigation
     case custom(Double, Double, Bool)
 }
 
@@ -48,6 +49,8 @@ public struct RefreshableScrollView<Content: View>: View {
     
     
     public init(mode: RefreshableScrollMode = .normal, @ViewBuilder content: () -> Content) {
+        // TODO: can we auto-detect the presence of the navigation view and/or searchability, and adjust mode automatically?
+
         switch mode {
             case .normal:
                 self.travelDistance = 80
@@ -56,9 +59,14 @@ public struct RefreshableScrollView<Content: View>: View {
                 
             case .navigation:
                 self.travelDistance = 80
+                self.activityOffset = 160
+                self.insertActivity = false
+
+            case .searchableNavigation:
+                self.travelDistance = 80
                 self.activityOffset = 240
                 self.insertActivity = false
-                
+
             case .custom(let distance, let offset, let insert):
                 self.travelDistance = distance
                 self.activityOffset = offset

@@ -21,17 +21,22 @@ struct ContentView: View {
         TabView {
             NormalExample()
                 .tabItem {
-                    Text("Normal")
+                    Label("Normal", systemImage: "tag")
                 }
             
             NavigationExample()
                 .tabItem {
-                    Text("Navigation")
+                    Label("Navigation", systemImage: "tag")
                 }
-                            
+
+            SearchableNavigationExample()
+                .tabItem {
+                    Label("Searchable", systemImage: "tag")
+                }
+
             ListExample()
                 .tabItem {
-                    Text("List")
+                    Label("List", systemImage: "tag")
                 }
         }
         .padding()
@@ -56,11 +61,35 @@ struct NormalExample: View {
 }
 
 struct NavigationExample: View {
+    var body: some View {
+        NavigationView {
+            RefreshableScrollView(mode: .navigation) {
+                LazyVStack {
+                    ForEach(testItems) { item in
+                        Text(item.id)
+                    }
+                }
+            }
+            .refreshable {
+                print("refreshing")
+                sleep(2)
+                print("done")
+            }
+            .navigationTitle("Custom View")
+            .foregroundColor(.primary)
+            .navigationBarTitleDisplayMode(.large)
+            .navigationViewStyle(.columns)
+        }
+    }
+}
+
+
+struct SearchableNavigationExample: View {
     @State var text = ""
     
     var body: some View {
         NavigationView {
-            RefreshableScrollView(mode: .navigation) {
+            RefreshableScrollView(mode: .searchableNavigation) {
                 LazyVStack {
                     ForEach(testItems) { item in
                         Text(item.id)
@@ -80,6 +109,7 @@ struct NavigationExample: View {
         }
     }
 }
+
 struct ListExample: View {
     var body: some View
     {
