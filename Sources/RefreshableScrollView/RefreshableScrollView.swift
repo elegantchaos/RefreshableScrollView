@@ -17,6 +17,10 @@
 import Foundation
 import SwiftUI
 
+extension Double {
+    static let activityThreshold = 0.6
+}
+
 public struct RefreshableScrollView<Content: View>: View {
     @State private var previousScrollOffset: CGFloat = 0
     @State private var scrollOffset: CGFloat = 0
@@ -97,12 +101,16 @@ public struct RefreshableScrollView<Content: View>: View {
             VStack {
                 Spacer()
                 ActivityRep(loading: loading)
-                    .opacity(percentage)
+                    .opacity(opacity)
                     .controlSize(.large)
                 Spacer()
             }
             .frame(height: height).fixedSize()
             .offset(y: -height + (self.loading && self.frozen ? height : 0.0))
+        }
+        
+        var opacity: Double {
+            return (percentage < .activityThreshold) ? 0.0 : (percentage - .activityThreshold) / (1.0 - .activityThreshold)
         }
     }
     
@@ -156,6 +164,7 @@ struct ActivityRep: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: UIActivityIndicatorView, context: UIViewRepresentableContext<ActivityRep>) {
+        print("updated")
         if loading {
             uiView.startAnimating()
         } else {
