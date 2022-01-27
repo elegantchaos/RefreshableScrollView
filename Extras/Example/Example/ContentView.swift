@@ -19,11 +19,16 @@ struct ContentView: View {
     
     var body: some View {
         TabView {
-            RefreshableExample()
+            NormalExample()
                 .tabItem {
-                    Text("Custom")
+                    Text("Normal")
                 }
             
+            NavigationExample()
+                .tabItem {
+                    Text("Navigation")
+                }
+                            
             ListExample()
                 .tabItem {
                     Text("List")
@@ -33,12 +38,29 @@ struct ContentView: View {
     }
 }
 
-struct RefreshableExample: View {
+struct NormalExample: View {
+    var body: some View {
+        RefreshableScrollView() {
+            LazyVStack {
+                ForEach(testItems) { item in
+                    Text(item.id)
+                }
+            }
+        }
+        .refreshable {
+            print("refreshing")
+            sleep(2)
+            print("done")
+        }
+    }
+}
+
+struct NavigationExample: View {
     @State var text = ""
     
     var body: some View {
         NavigationView {
-            RefreshableScrollView(travelHeight: 80, activityOffset: 240) {
+            RefreshableScrollView(mode: .navigation) {
                 LazyVStack {
                     ForEach(testItems) { item in
                         Text(item.id)
@@ -58,13 +80,12 @@ struct RefreshableExample: View {
         }
     }
 }
-
 struct ListExample: View {
     var body: some View
     {
         List {
-            ForEach(1..<100) { item in
-                Text("\(item)")
+            ForEach(testItems) { item in
+                Text("\(item.id)")
             }
         }
         .listStyle(.plain)

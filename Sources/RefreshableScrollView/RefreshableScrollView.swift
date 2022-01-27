@@ -21,6 +21,12 @@ extension Double {
     static let activityThreshold = 0.6
 }
 
+public enum RefreshableScrollMode {
+    case normal
+    case navigation
+    case custom(Double, Double, Bool)
+}
+
 public struct RefreshableScrollView<Content: View>: View {
     @Environment(\.refresh) var refreshAction
 
@@ -38,11 +44,27 @@ public struct RefreshableScrollView<Content: View>: View {
     @State var refreshing: Bool = false
     let content: Content
     
-    let insertActivity = false
+    let insertActivity: Bool
     
-    public init(travelHeight: CGFloat = 80, activityOffset: CGFloat? = nil, @ViewBuilder content: () -> Content) {
-        self.travelDistance = travelHeight
-        self.activityOffset = activityOffset ?? travelHeight
+    
+    public init(mode: RefreshableScrollMode = .normal, @ViewBuilder content: () -> Content) {
+        switch mode {
+            case .normal:
+                self.travelDistance = 80
+                self.activityOffset = 80
+                self.insertActivity = true
+                
+            case .navigation:
+                self.travelDistance = 80
+                self.activityOffset = 240
+                self.insertActivity = false
+                
+            case .custom(let distance, let offset, let insert):
+                self.travelDistance = distance
+                self.activityOffset = offset
+                self.insertActivity = insert
+        }
+
         self.content = content()
     }
     
