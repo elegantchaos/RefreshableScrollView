@@ -100,9 +100,7 @@ public struct RefreshableScrollView<Content: View>: View {
     
     func alignmentGuide(dimensions: ViewDimensions) -> CGFloat {
         if insertActivity {
-            let value = (self.refreshing && self.frozen) ? -self.activityOffset : 0.0
-            print("alignment: \(value)")
-            return value
+            return (self.refreshing && self.frozen) ? -self.activityOffset : 0.0
         } else {
             return 0
         }
@@ -167,7 +165,6 @@ public struct RefreshableScrollView<Content: View>: View {
             }
             
             let opacity = (percentage < .activityThreshold) ? 0.0 : (percentage - .activityThreshold) / (1.0 - .activityThreshold)
-            print(opacity)
             return opacity
         }
     }
