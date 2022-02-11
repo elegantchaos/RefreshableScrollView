@@ -54,7 +54,7 @@ struct NormalExample: View {
         }
         .refreshable {
             print("refreshing")
-            sleep(2)
+            try? await Task.sleep(nanoseconds: 2000000000)
             print("done")
         }
     }

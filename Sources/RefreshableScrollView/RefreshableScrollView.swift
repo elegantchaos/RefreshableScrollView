@@ -109,51 +109,35 @@ public class RectStorage: ObservableObject {
     }
 }
 
+
 public struct RefreshableScrollView<Content: View>: View {
     @Environment(\.refresh) var refreshAction
-    
-    @ViewBuilder let content: () -> Content
-    @State private var rects: RectStorage
-    
-    public init(mode: RefreshableScrollMode = .normal, @ViewBuilder content: @escaping () -> Content) {
-        let state = RectStorage(mode: mode)
-        
-        self.content = content
-        self._rects = .init(initialValue: state)
-    }
-    
-    public var body: some View {
-        rects.action = refreshAction
-        return RefreshableScrollViewInner(content: content)
-            .environmentObject(rects)
-    }
-}
-
-public struct RefreshableScrollViewInner<Content: View>: View {
-    @EnvironmentObject var state: RectStorage
+    @StateObject var state: RectStorage
     
     let content: Content
     
-    public init(@ViewBuilder content: () -> Content) {
+    public init(mode: RefreshableScrollMode = .normal, @ViewBuilder content: () -> Content) {
         // TODO: can we auto-detect the presence of the navigation view and/or searchability, and adjust mode automatically?
         
         self.content = content()
+        _state = .init(wrappedValue: RectStorage(mode: mode))
     }
     
     public var body: some View {
 //        Self._printChanges()
         
+        state.action = refreshAction
         return VStack {
             ScrollView {
                 ZStack(alignment: .top) {
-                    MovingView()
+                    MovingView(state: state)
                     
                     self.content.alignmentGuide(.top, computeValue: alignmentGuide)
                     
                     IndicatorView(height: state.activityOffset, loading: state.refreshing, frozen: state.frozen, offset: shouldOffsetIndicator, percentage: state.percentage)
                 }
             }
-            .background(FixedView())
+            .background(FixedView(state: state))
         }
     }
     
@@ -199,7 +183,7 @@ public struct RefreshableScrollViewInner<Content: View>: View {
     }
     
     struct MovingView: View {
-        @EnvironmentObject var rects: RectStorage
+        let state: RectStorage
         
         var body: some View {
             GeometryReader { proxy in
@@ -210,10 +194,10 @@ public struct RefreshableScrollViewInner<Content: View>: View {
         func pushRect(proxy: GeometryProxy) -> Color {
             
             let rect = proxy.frame(in: .global)
-            if rect != rects.movingRect {
+            if rect != state.movingRect {
                 DispatchQueue.main.async {
-                    rects.movingRect = rect
-                    rects.update()
+                    state.movingRect = rect
+                    state.update()
                 }
             }
             return Color.clear
@@ -221,7 +205,7 @@ public struct RefreshableScrollViewInner<Content: View>: View {
     }
     
     struct FixedView: View {
-        @EnvironmentObject var rects: RectStorage
+                let state: RectStorage
         
         var body: some View {
             GeometryReader { proxy in
@@ -231,10 +215,10 @@ public struct RefreshableScrollViewInner<Content: View>: View {
         
         func pushRect(proxy: GeometryProxy) -> Color {
             let rect = proxy.frame(in: .global)
-            if rect != rects.fixedRect {
+            if rect != state.fixedRect {
                 DispatchQueue.main.async {
-                    rects.fixedRect = rect
-                    rects.update()
+                    state.fixedRect = rect
+                    state.update()
                 }
             }
             return Color.clear
