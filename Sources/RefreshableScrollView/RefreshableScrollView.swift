@@ -28,29 +28,29 @@ public enum RefreshableScrollMode {
     case custom(Double, Double, Bool)
 }
 
-public struct RefreshableScrollView<Content: View>: View {
-    @Environment(\.refresh) var refreshAction
+public class RectStorage: ObservableObject {
+    @Published var movingRect: CGRect = .zero
+    @Published var fixedRect: CGRect = .zero
 
-    @State private var previousScrollOffset: CGFloat = 0
-    @State private var scrollOffset: CGFloat = 0
-    @State private var frozen: Bool = false
-    @State private var percentage: Double = 0
+    @Published var previousScrollOffset: CGFloat = 0
+    @Published var scrollOffset: CGFloat = 0
+    @Published var frozen: Bool = false
+    @Published var percentage: Double = 0
     
     /// How far the user must drag before refreshing starts.
-    var travelDistance: CGFloat
+    let travelDistance: CGFloat
     
     /// The offset of the indicator view from the top of the content.
-    var activityOffset: CGFloat
+    let activityOffset: CGFloat
     
-    @State var refreshing: Bool = false
-    let content: Content
-    
-    let insertActivity: Bool
-    
-    
-    public init(mode: RefreshableScrollMode = .normal, @ViewBuilder content: () -> Content) {
-        // TODO: can we auto-detect the presence of the navigation view and/or searchability, and adjust mode automatically?
+    @Published var refreshing: Bool = false
 
+    let insertActivity: Bool
+    var action: RefreshAction? = nil
+    
+    public init(mode: RefreshableScrollMode = .normal) {
+        // TODO: can we auto-detect the presence of the navigation view and/or searchability, and adjust mode automatically?
+        
         switch mode {
             case .normal:
                 self.travelDistance = 80
@@ -61,22 +61,88 @@ public struct RefreshableScrollView<Content: View>: View {
                 self.travelDistance = 80
                 self.activityOffset = 160
                 self.insertActivity = false
-
+                
             case .searchableNavigation:
                 self.travelDistance = 80
                 self.activityOffset = 240
                 self.insertActivity = false
-
+                
             case .custom(let distance, let offset, let insert):
                 self.travelDistance = distance
                 self.activityOffset = offset
                 self.insertActivity = insert
         }
+    }
+    
+    func update() {
+        // Calculate scroll offset
+        scrollOffset  = movingRect.minY - fixedRect.minY
+        
+        percentage = min(1.0, scrollOffset / travelDistance)
+        
+        // Crossing the threshold on the way down, we start the refresh process
+        if !refreshing && (scrollOffset > travelDistance && previousScrollOffset <= travelDistance) {
+            refreshing = true
+            Task {
+                print("running action")
+                await action?()
+                print("done action")
+                DispatchQueue.main.async {
+                    self.refreshing = false
+                }
+            }
+        }
+        
+        if refreshing {
+            // Crossing the threshold on the way up, we add a space at the top of the scrollview
+            if previousScrollOffset > travelDistance && scrollOffset <= travelDistance {
+                frozen = true
+                
+            }
+        } else {
+            // remove the sapce at the top of the scroll view
+            frozen = false
+        }
+        
+        // Update last scroll offset
+        previousScrollOffset = scrollOffset
+    }
+}
 
+public struct RefreshableScrollView<Content: View>: View {
+    @Environment(\.refresh) var refreshAction
+    
+    @ViewBuilder let content: () -> Content
+    @State private var rects: RectStorage
+    
+    public init(mode: RefreshableScrollMode = .normal, @ViewBuilder content: @escaping () -> Content) {
+        let state = RectStorage(mode: mode)
+        
+        self.content = content
+        self._rects = .init(initialValue: state)
+    }
+    
+    public var body: some View {
+        rects.action = refreshAction
+        return RefreshableScrollViewInner(content: content)
+            .environmentObject(rects)
+    }
+}
+
+public struct RefreshableScrollViewInner<Content: View>: View {
+    @EnvironmentObject var state: RectStorage
+    
+    let content: Content
+    
+    public init(@ViewBuilder content: () -> Content) {
+        // TODO: can we auto-detect the presence of the navigation view and/or searchability, and adjust mode automatically?
+        
         self.content = content()
     }
     
     public var body: some View {
+//        Self._printChanges()
+        
         return VStack {
             ScrollView {
                 ZStack(alignment: .top) {
@@ -84,62 +150,25 @@ public struct RefreshableScrollView<Content: View>: View {
                     
                     self.content.alignmentGuide(.top, computeValue: alignmentGuide)
                     
-                    IndicatorView(height: self.activityOffset, loading: self.refreshing, frozen: self.frozen, offset: shouldOffsetIndicator, percentage: self.percentage)
+                    IndicatorView(height: state.activityOffset, loading: state.refreshing, frozen: state.frozen, offset: shouldOffsetIndicator, percentage: state.percentage)
                 }
             }
             .background(FixedView())
-            .onPreferenceChange(RefreshableKey.self) { values in
-                self.refreshLogic(values: values)
-            }
         }
     }
     
     var shouldOffsetIndicator: Bool {
-        return !insertActivity || !(refreshing && frozen)
+        return !state.insertActivity || !(state.refreshing && state.frozen)
     }
     
     func alignmentGuide(dimensions: ViewDimensions) -> CGFloat {
-        if insertActivity {
-            return (self.refreshing && self.frozen) ? -self.activityOffset : 0.0
+        if state.insertActivity {
+            return (state.refreshing && state.frozen) ? -state.activityOffset : 0.0
         } else {
             return 0
         }
     }
     
-    func refreshLogic(values: [RefreshableKey.ViewBounds]) {
-        DispatchQueue.main.async {
-            // Calculate scroll offset
-            let movingBounds = values.first { $0.vType == .movingView }?.bounds ?? .zero
-            let fixedBounds = values.first { $0.vType == .fixedView }?.bounds ?? .zero
-            
-            self.scrollOffset  = movingBounds.minY - fixedBounds.minY
-            
-            self.percentage = min(1.0, scrollOffset / self.travelDistance)
-            
-            // Crossing the threshold on the way down, we start the refresh process
-            if !self.refreshing && (self.scrollOffset > self.travelDistance && self.previousScrollOffset <= self.travelDistance) {
-                self.refreshing = true
-                Task {
-                    await refreshAction?()
-                    self.refreshing = false
-                }
-            }
-            
-            if self.refreshing {
-                // Crossing the threshold on the way up, we add a space at the top of the scrollview
-                if self.previousScrollOffset > self.travelDistance && self.scrollOffset <= self.travelDistance {
-                    self.frozen = true
-                    
-                }
-            } else {
-                // remove the sapce at the top of the scroll view
-                self.frozen = false
-            }
-            
-            // Update last scroll offset
-            self.previousScrollOffset = self.scrollOffset
-        }
-    }
     
     struct IndicatorView: View {
         let height: CGFloat
@@ -170,19 +199,47 @@ public struct RefreshableScrollView<Content: View>: View {
     }
     
     struct MovingView: View {
+        @EnvironmentObject var rects: RectStorage
+        
         var body: some View {
             GeometryReader { proxy in
-                Color.clear.preference(key: RefreshableKey.self, value: [RefreshableKey.ViewBounds(vType: .movingView, bounds: proxy.frame(in: .global))])
+                pushRect(proxy: proxy)
             }.frame(height: 0)
+        }
+        
+        func pushRect(proxy: GeometryProxy) -> Color {
+            
+            let rect = proxy.frame(in: .global)
+            if rect != rects.movingRect {
+                DispatchQueue.main.async {
+                    rects.movingRect = rect
+                    rects.update()
+                }
+            }
+            return Color.clear
         }
     }
     
     struct FixedView: View {
+        @EnvironmentObject var rects: RectStorage
+        
         var body: some View {
             GeometryReader { proxy in
-                Color.clear.preference(key: RefreshableKey.self, value: [RefreshableKey.ViewBounds(vType: .fixedView, bounds: proxy.frame(in: .global))])
+                pushRect(proxy: proxy)
             }
         }
+        
+        func pushRect(proxy: GeometryProxy) -> Color {
+            let rect = proxy.frame(in: .global)
+            if rect != rects.fixedRect {
+                DispatchQueue.main.async {
+                    rects.fixedRect = rect
+                    rects.update()
+                }
+            }
+            return Color.clear
+        }
+        
     }
 }
 

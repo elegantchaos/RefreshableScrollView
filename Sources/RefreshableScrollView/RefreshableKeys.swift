@@ -16,11 +16,11 @@ struct RefreshableKey: PreferenceKey {
         let bounds: CGRect
     }
     
-    static var defaultValue: [ViewBounds] = []
+    static var defaultValue: ViewBounds?
     
-    static func reduce(value: inout [ViewBounds], nextValue: () -> [ViewBounds]) {
-        value.append(contentsOf: nextValue())
+    static func reduce(value: inout ViewBounds?, nextValue: () -> ViewBounds?) {
+        value = nextValue()
     }
     
-    typealias Value = [ViewBounds]
+    typealias Value = ViewBounds?
 }
