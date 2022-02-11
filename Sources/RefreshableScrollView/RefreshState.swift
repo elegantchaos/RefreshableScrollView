@@ -8,7 +8,7 @@ import SwiftUI
 internal class RefreshState: ObservableObject {
     // MARK: Configuration
     /// How far the user must drag before refreshing starts.
-    let travelDistance: CGFloat
+    private let travelDistance: CGFloat
     
     /// The offset of the indicator view from the top of the content.
     let activityOffset: CGFloat
@@ -43,7 +43,7 @@ internal class RefreshState: ObservableObject {
                 
             case .navigation:
                 self.travelDistance = 80
-                self.activityOffset = 160
+                self.activityOffset = 140
                 self.insertActivity = false
                 
             case .searchableNavigation:
@@ -71,8 +71,7 @@ internal class RefreshState: ObservableObject {
 
         let scrollOffset  = movingRect.minY - fixedRect.minY
         let newPercentage = min(1.0, scrollOffset / travelDistance)
-        indicatorOffset = -scrollOffset
-        
+
         if percentage != newPercentage {
             percentage = newPercentage
             
@@ -98,7 +97,13 @@ internal class RefreshState: ObservableObject {
                 // remove the sapce at the top of the scroll view
                 frozen = false
             }
-            
+
+            if insertActivity {
+                indicatorOffset = !(refreshing && frozen) ? -activityOffset : -scrollOffset
+            } else {
+                indicatorOffset = -activityOffset
+            }
+
             // Update last scroll offset
             previousScrollOffset = scrollOffset
         }
