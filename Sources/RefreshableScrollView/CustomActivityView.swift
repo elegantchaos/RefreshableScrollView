@@ -14,7 +14,7 @@ struct CustomActivityView: UIViewRepresentable {
         let view = UIActivityIndicatorView()
         view.style = .large
         view.hidesWhenStopped = false
-        view.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+//        view.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
         return view
     }
     

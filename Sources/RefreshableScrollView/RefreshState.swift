@@ -29,6 +29,7 @@ internal class RefreshState: ObservableObject {
     @Published var percentage: Double = 0
     @Published var refreshing: Bool = false
     @Published var frozen: Bool = false
+    @Published var indicatorOffset: Double = 0
 
     
     public init(mode: RefreshableScrollMode = .normal) {
@@ -70,12 +71,14 @@ internal class RefreshState: ObservableObject {
 
         let scrollOffset  = movingRect.minY - fixedRect.minY
         let newPercentage = min(1.0, scrollOffset / travelDistance)
+        indicatorOffset = -scrollOffset
         
         if percentage != newPercentage {
             percentage = newPercentage
             
             // Crossing the threshold on the way down, we start the refresh process
-            if !refreshing && (scrollOffset > travelDistance && previousScrollOffset <= travelDistance) {
+            let crossedThresholdGoingDown = (scrollOffset > travelDistance) && (previousScrollOffset <= travelDistance)
+            if !refreshing && crossedThresholdGoingDown {
                 refreshing = true
                 Task {
                     await action?()
@@ -86,10 +89,10 @@ internal class RefreshState: ObservableObject {
             }
             
             if refreshing {
-                // Crossing the threshold on the way up, we add a space at the top of the scrollview
-                if previousScrollOffset > travelDistance && scrollOffset <= travelDistance {
+                let crossedThresholdGoingUp = (previousScrollOffset > travelDistance) && (scrollOffset <= travelDistance)
+                if crossedThresholdGoingUp  {
+                    // add a space at the top of the scrollview
                     frozen = true
-                    
                 }
             } else {
                 // remove the sapce at the top of the scroll view

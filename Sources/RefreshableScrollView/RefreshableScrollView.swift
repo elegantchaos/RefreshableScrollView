@@ -47,15 +47,11 @@ public struct RefreshableScrollView<Content: View>: View {
                     
                     self.content.alignmentGuide(.top, computeValue: alignmentGuide)
                     
-                    IndicatorView(height: state.activityOffset, loading: state.refreshing, frozen: state.frozen, offset: shouldOffsetIndicator, percentage: state.percentage)
+                    IndicatorView(state: state)
                 }
             }
             .background(BoundsReaderView(state: state, mode: .fixed))
         }
-    }
-    
-    var shouldOffsetIndicator: Bool {
-        return !state.insertActivity || !(state.refreshing && state.frozen)
     }
     
     func alignmentGuide(dimensions: ViewDimensions) -> CGFloat {
@@ -66,34 +62,6 @@ public struct RefreshableScrollView<Content: View>: View {
         }
     }
     
-    
-    struct IndicatorView: View {
-        let height: CGFloat
-        let loading: Bool
-        let frozen: Bool
-        let offset: Bool
-        let percentage: Double
-        
-        var body: some View {
-            VStack {
-                Spacer()
-                CustomActivityView(animating: loading)
-                    .opacity(opacity)
-                Spacer()
-            }
-            .frame(height: height).fixedSize()
-            .offset(y: offset ? -height: 0.0)
-        }
-        
-        var opacity: Double {
-            if loading && frozen {
-                return 1.0
-            }
-            
-            let opacity = (percentage < .activityThreshold) ? 0.0 : (percentage - .activityThreshold) / (1.0 - .activityThreshold)
-            return opacity
-        }
-    }
     
 }
 
