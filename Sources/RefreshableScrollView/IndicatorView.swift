@@ -13,17 +13,8 @@ struct IndicatorView: View {
 
         return CustomActivityView(animating: state.refreshing)
             .opacity(opacity)
-            .frame(height: height).fixedSize()
+            .frame(height: height)
             .offset(y: state.indicatorOffset)
-
-//        return VStack {
-//            Spacer()
-//            CustomActivityView(animating: state.refreshing)
-//                .opacity(opacity)
-//            Spacer()
-//        }
-//        .frame(height: height).fixedSize()
-//        .offset(y: state.indicatorOffset)
     }
     
     var opacity: Double {

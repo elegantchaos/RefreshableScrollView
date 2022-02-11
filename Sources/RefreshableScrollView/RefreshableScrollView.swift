@@ -56,7 +56,7 @@ public struct RefreshableScrollView<Content: View>: View {
     
     func alignmentGuide(dimensions: ViewDimensions) -> CGFloat {
         if state.insertActivity {
-            return (state.refreshing && state.frozen) ? -state.activityOffset : 0.0
+            return (state.refreshing && state.frozen) ? -state.activityOffset - state.indicatorOffset : 0.0
         } else {
             return 0
         }
