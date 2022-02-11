@@ -45,7 +45,7 @@ public struct RefreshableScrollView<Content: View>: View {
                 ZStack(alignment: .top) {
                     BoundsReaderView(state: state, mode: .moving)
                     
-                    self.content.alignmentGuide(.top, computeValue: alignmentGuide)
+                    self.content.alignmentGuide(.top, computeValue: { _ in state.alignmentOffset})
                     
                     IndicatorView(state: state)
                 }
@@ -53,16 +53,6 @@ public struct RefreshableScrollView<Content: View>: View {
             .background(BoundsReaderView(state: state, mode: .fixed))
         }
     }
-    
-    func alignmentGuide(dimensions: ViewDimensions) -> CGFloat {
-        if state.insertActivity {
-            return (state.refreshing && state.frozen) ? -state.activityOffset - state.indicatorOffset : 0.0
-        } else {
-            return 0
-        }
-    }
-    
-    
 }
 
 struct RefreshableScrollView_Previews: PreviewProvider {

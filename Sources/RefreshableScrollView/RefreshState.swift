@@ -29,8 +29,8 @@ internal class RefreshState: ObservableObject {
     @Published var percentage: Double = 0
     @Published var refreshing: Bool = false
     @Published var frozen: Bool = false
-    @Published var indicatorOffset: Double = 0
-
+    @Published var indicatorOffset: CGFloat = 0
+    @Published var alignmentOffset: CGFloat = 0
     
     public init(mode: RefreshableScrollMode = .normal) {
         // TODO: can we auto-detect the presence of the navigation view and/or searchability, and adjust mode automatically?
@@ -100,8 +100,10 @@ internal class RefreshState: ObservableObject {
 
             if insertActivity {
                 indicatorOffset = !(refreshing && frozen) ? -activityOffset : -scrollOffset
+                alignmentOffset = (refreshing && frozen) ? -activityOffset - indicatorOffset : 0.0
             } else {
                 indicatorOffset = -activityOffset
+                alignmentOffset = 0
             }
 
             // Update last scroll offset
