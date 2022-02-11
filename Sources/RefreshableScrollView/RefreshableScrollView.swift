@@ -25,6 +25,8 @@ public enum RefreshableScrollMode {
 
 public struct RefreshableScrollView<Content: View>: View {
     @Environment(\.refresh) var refreshAction
+    @Environment(\.isSearching) var isSearching
+    
     @StateObject var state: RefreshState
     
     let content: Content
@@ -37,9 +39,9 @@ public struct RefreshableScrollView<Content: View>: View {
     }
     
     public var body: some View {
-        state.action = refreshAction
+        state.action = isSearching ? nil : refreshAction
         return VStack {
-            ScrollView {
+            ScrollView(isSearching ? [] : [.vertical]) {
                 ZStack(alignment: .top) {
                     BoundsReaderView(state: state, mode: .moving)
                     

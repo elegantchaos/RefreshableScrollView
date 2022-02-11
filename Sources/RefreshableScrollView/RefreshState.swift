@@ -6,6 +6,7 @@
 import SwiftUI
 
 internal class RefreshState: ObservableObject {
+    // MARK: Configuration
     /// How far the user must drag before refreshing starts.
     let travelDistance: CGFloat
     
@@ -15,17 +16,20 @@ internal class RefreshState: ObservableObject {
     /// Should the activity indicator be inserted into the view contents,
     /// or floated above it?
     let insertActivity: Bool
+    
+    /// Refresh action to perform.
+    var action: RefreshAction? = nil
 
-    @Published var movingRect: CGRect = .zero
-    @Published var fixedRect: CGRect = .zero
-
-    @Published var previousScrollOffset: CGFloat = 0
-//    @Published var scrollOffset: CGFloat = 0
+    // MARK: Private State
+    private var movingRect: CGRect = .zero
+    private var fixedRect: CGRect = .zero
+    private var previousScrollOffset: CGFloat = 0
+    
+    // MARK: Published State
     @Published var percentage: Double = 0
     @Published var refreshing: Bool = false
     @Published var frozen: Bool = false
 
-    var action: RefreshAction? = nil
     
     public init(mode: RefreshableScrollMode = .normal) {
         // TODO: can we auto-detect the presence of the navigation view and/or searchability, and adjust mode automatically?
@@ -59,32 +63,22 @@ internal class RefreshState: ObservableObject {
     }
     
     func update(_ update: Update, newRect: CGRect) {
-        let changed: Bool
         switch update {
-            case .fixed:
-                changed = newRect != fixedRect
-                if changed {
-                    fixedRect = newRect
-                }
-                
-            case .moving:
-                changed = newRect != movingRect
-                if changed {
-                    movingRect = newRect
-                }
+            case .fixed: fixedRect = newRect
+            case .moving: movingRect = newRect
         }
+
+        let scrollOffset  = movingRect.minY - fixedRect.minY
+        let newPercentage = min(1.0, scrollOffset / travelDistance)
         
-        if changed {
-            let scrollOffset  = movingRect.minY - fixedRect.minY
-            percentage = min(1.0, scrollOffset / travelDistance)
+        if percentage != newPercentage {
+            percentage = newPercentage
             
             // Crossing the threshold on the way down, we start the refresh process
             if !refreshing && (scrollOffset > travelDistance && previousScrollOffset <= travelDistance) {
                 refreshing = true
                 Task {
-                    print("running action")
                     await action?()
-                    print("done action")
                     DispatchQueue.main.async {
                         self.refreshing = false
                     }
