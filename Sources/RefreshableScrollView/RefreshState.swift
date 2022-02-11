@@ -82,7 +82,10 @@ internal class RefreshState: ObservableObject {
                 Task {
                     await action?()
                     DispatchQueue.main.async {
-                        self.refreshing = false
+                        withAnimation {
+                            self.refreshing = false
+                            self.alignmentOffset = 0
+                        }
                     }
                 }
             }
