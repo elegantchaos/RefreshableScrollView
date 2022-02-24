@@ -31,17 +31,23 @@ public struct RefreshableScrollView<Content: View>: View {
     
     let content: Content
     
-    public init(mode: RefreshableScrollMode = .normal, @ViewBuilder content: () -> Content) {
+    public let axes: Axis.Set
+    
+    public let showsIndicators: Bool
+    
+    public init(axes: Axis.Set = .vertical, showsIndicators: Bool = true, mode: RefreshableScrollMode = .normal, @ViewBuilder content: () -> Content) {
         // TODO: can we auto-detect the presence of the navigation view and/or searchability, and adjust mode automatically?
         
         self.content = content()
+        self.axes = axes
+        self.showsIndicators = showsIndicators
         _state = .init(wrappedValue: RefreshState(mode: mode))
     }
     
     public var body: some View {
         state.action = isSearching ? nil : refreshAction
         return VStack {
-            ScrollView(isSearching ? [] : [.vertical]) {
+            ScrollView(isSearching ? [] : [axes], showsIndicators: showsIndicators) {
                 ZStack(alignment: .top) {
                     BoundsReaderView(state: state, mode: .moving)
                     
