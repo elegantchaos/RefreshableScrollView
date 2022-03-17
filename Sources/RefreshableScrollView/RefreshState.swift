@@ -105,7 +105,7 @@ internal class RefreshState: ObservableObject {
                 indicatorOffset = !(refreshing && frozen) ? -activityOffset : -scrollOffset
                 alignmentOffset = (refreshing && frozen) ? -activityOffset - indicatorOffset : 0.0
             } else {
-                indicatorOffset = -activityOffset
+                indicatorOffset = -(activityOffset + scrollOffset)
                 alignmentOffset = 0
             }
 
