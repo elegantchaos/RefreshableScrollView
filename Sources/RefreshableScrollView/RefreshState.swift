@@ -43,12 +43,12 @@ internal class RefreshState: ObservableObject {
                 
             case .navigation:
                 self.travelDistance = 80
-                self.activityOffset = 140
+                self.activityOffset = 100
                 self.insertActivity = false
                 
             case .searchableNavigation:
                 self.travelDistance = 80
-                self.activityOffset = 240
+                self.activityOffset = 200
                 self.insertActivity = false
                 
             case .custom(let distance, let offset, let insert):
@@ -72,7 +72,7 @@ internal class RefreshState: ObservableObject {
         let scrollOffset  = movingRect.minY - fixedRect.minY
         let newPercentage = min(1.0, scrollOffset / travelDistance)
 
-        if percentage != newPercentage {
+        if previousScrollOffset != scrollOffset {
             percentage = newPercentage
             
             // Crossing the threshold on the way down, we start the refresh process
@@ -105,6 +105,9 @@ internal class RefreshState: ObservableObject {
                 indicatorOffset = !(refreshing && frozen) ? -activityOffset : -scrollOffset
                 alignmentOffset = (refreshing && frozen) ? -activityOffset - indicatorOffset : 0.0
             } else {
+                print(activityOffset)
+                print(scrollOffset)
+                
                 indicatorOffset = -(activityOffset + scrollOffset)
                 alignmentOffset = 0
             }

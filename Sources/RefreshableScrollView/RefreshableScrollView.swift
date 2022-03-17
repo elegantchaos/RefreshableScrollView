@@ -50,13 +50,16 @@ public struct RefreshableScrollView<Content: View>: View {
             ScrollView(isSearching ? [] : [axes], showsIndicators: showsIndicators) {
                 ZStack(alignment: .top) {
                     BoundsReaderView(state: state, mode: .moving)
-                    
+                        .background(Color.red)
+
                     self.content.alignmentGuide(.top, computeValue: { _ in state.alignmentOffset})
                     
                     IndicatorView(state: state)
                 }
             }
-            .background(BoundsReaderView(state: state, mode: .fixed))
+            .background(
+                BoundsReaderView(state: state, mode: .fixed)
+            )
         }
     }
 }
