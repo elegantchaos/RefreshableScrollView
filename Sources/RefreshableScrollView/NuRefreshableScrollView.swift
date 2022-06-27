@@ -21,19 +21,39 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
     }
     
     public class Controller: UIViewController, UIScrollViewDelegate {
-        var refreshAction: RefreshAction?
         var contentController: UIHostingController<Content>?
-        var refreshControl: UIRefreshControl?
+        var scrollView: UIScrollView?
         
         func setup(for content: Content, refreshAction: RefreshAction?) {
+            
             let refreshControl = UIRefreshControl()
-            refreshControl.addAction(UIAction(handler: handleRefresh), for: .primaryActionTriggered)
+
+            let action = UIAction { _ in
+                Task {
+                    refreshControl.beginRefreshing()
+                    await refreshAction?()
+                    refreshControl.endRefreshing()
+                }
+            }
+            
+            refreshControl.addAction(action, for: .primaryActionTriggered)
             
             let scrollView = UIScrollView()
             scrollView.refreshControl = refreshControl
- 
-            let contentController = UIHostingController(rootView: content)
-            if let contentView = contentController.view {
+            scrollView.delegate = self
+            
+            self.scrollView = scrollView
+            self.contentController = UIHostingController(rootView: content)
+        }
+
+        public override func loadView() {
+            view = scrollView
+        }
+
+        public override func viewDidLoad() {
+            if let scrollView = self.scrollView, let contentController = contentController, let contentView = contentController.view {
+                scrollView.addSubview(contentController.view)
+
                 contentView.translatesAutoresizingMaskIntoConstraints = false
                 NSLayoutConstraint.activate([
                     contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
@@ -41,31 +61,16 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
                     contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
                     contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
                     ])
+
+//                addChild(contentController)
             }
-            
-            addChild(contentController)
-            scrollView.addSubview(contentController.view)
-
-            self.view = scrollView
-            self.refreshAction = refreshAction
-            self.refreshControl = refreshControl
-            self.contentController = contentController
         }
-
+        
         public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
            super.traitCollectionDidChange(previousTraitCollection)
 
            contentController?.view.invalidateIntrinsicContentSize()
          }
-
-        func handleRefresh(_ action: UIAction) {
-            Task {
-                refreshControl?.beginRefreshing()
-                await refreshAction?()
-                refreshControl?.endRefreshing()
-            }
-        }
-
     }
 
     public func makeUIViewController(context: Context) -> Controller {
