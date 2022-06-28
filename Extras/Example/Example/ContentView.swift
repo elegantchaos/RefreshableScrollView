@@ -51,14 +51,18 @@ struct ContentView: View {
 struct NuExample: View {
     var body: some View {
         HStack {
-            Spacer()
+            Text("<")
+                .background(Color.red)
 
+            Spacer()
+            
             NuRefreshableScrollView() {
-                LazyVStack {
+                LazyVStack(alignment: .center) {
                     ForEach(testItems) { item in
                         Text(item.id)
                     }
                 }
+                .frame(maxWidth: .infinity)
             }
             .refreshable {
                 print("refreshing")
@@ -67,6 +71,9 @@ struct NuExample: View {
             }
 
             Spacer()
+
+            Text(">")
+                .background(Color.red)
         }
     }
 }

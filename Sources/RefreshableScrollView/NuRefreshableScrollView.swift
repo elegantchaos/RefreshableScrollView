@@ -24,7 +24,12 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
         var contentController: UIHostingController<Content>?
         var scrollView: UIScrollView?
         
-        func setup(for content: Content, refreshAction: RefreshAction?) {
+        override public var preferredContentSize: CGSize {
+            get { contentController?.view?.intrinsicContentSize ?? super.preferredContentSize }
+            set { super.preferredContentSize = newValue }
+        }
+
+        func setup(for content: Content, refreshAction: RefreshAction?, showsIndicators: Bool, axes: Axis.Set) {
             
             let refreshControl = UIRefreshControl()
 
@@ -40,26 +45,31 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
             
             let scrollView = UIScrollView()
             scrollView.refreshControl = refreshControl
+            scrollView.showsVerticalScrollIndicator = showsIndicators && axes.contains(.vertical)
+            scrollView.showsHorizontalScrollIndicator = showsIndicators && axes.contains(.horizontal)
             scrollView.delegate = self
             
             self.scrollView = scrollView
             self.contentController = UIHostingController(rootView: content)
         }
 
-        func update() {
+        func update(showsIndicators: Bool, axes: Axis.Set) {
             if let scrollView = self.scrollView, let contentController = contentController {
                 var size = contentController.view.intrinsicContentSize
-                let fits = contentController.sizeThatFits(in: .init(width: CGFloat.infinity, height: .infinity))
-                print("intrinsic \(size), frame \(scrollView.frame.size), fits \(fits)")
-
-                size.width = scrollView.frame.width
+                if !axes.contains(.horizontal) {
+                    size.width = scrollView.frame.width
+                }
+                if !axes.contains(.vertical) {
+                    size.height = scrollView.frame.height
+                }
 
                 scrollView.contentSize = size
-                scrollView.frame.size = size
-
-                preferredContentSize = size
-                
+                print("intrinsic \(contentController.view.intrinsicContentSize), frame \(scrollView.frame.size), used \(size)")
             }
+        }
+        
+        func cleanup() {
+            scrollView?.refreshControl = nil
         }
         
         public override func loadView() {
@@ -68,14 +78,17 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
 
         public override func viewDidLoad() {
             if let scrollView = self.scrollView, let contentController = contentController, let contentView = contentController.view {
+                contentView.translatesAutoresizingMaskIntoConstraints = false
                 scrollView.addSubview(contentController.view)
 
-                contentView.translatesAutoresizingMaskIntoConstraints = false
                 NSLayoutConstraint.activate([
+                    contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+                    contentView.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
                     contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-                    contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+                    contentView.centerXAnchor.constraint(equalTo: scrollView.centerXAnchor),
+//                    contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
                     contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-                    contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+//                    contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
                     ])
             }
         }
@@ -89,14 +102,16 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
 
     public func makeUIViewController(context: Context) -> Controller {
         let controller = Controller()
-        controller.setup(for: content, refreshAction: refreshAction)
-        controller.update()
+        controller.setup(for: content, refreshAction: refreshAction, showsIndicators: showsIndicators, axes: axes)
+        controller.update(showsIndicators: showsIndicators, axes: axes)
         return controller
     }
     
     public func updateUIViewController(_ controller: Controller, context: Context) {
-        controller.update()
+        controller.update(showsIndicators: showsIndicators, axes: axes)
     }
     
-    
+    public static func dismantleUIViewController(_ controller: Controller, coordinator: ()) {
+        controller.cleanup()
+    }
 }
