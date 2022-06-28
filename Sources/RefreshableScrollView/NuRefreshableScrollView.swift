@@ -46,6 +46,22 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
             self.contentController = UIHostingController(rootView: content)
         }
 
+        func update() {
+            if let scrollView = self.scrollView, let contentController = contentController {
+                var size = contentController.view.intrinsicContentSize
+                let fits = contentController.sizeThatFits(in: .init(width: CGFloat.infinity, height: .infinity))
+                print("intrinsic \(size), frame \(scrollView.frame.size), fits \(fits)")
+
+                size.width = scrollView.frame.width
+
+                scrollView.contentSize = size
+                scrollView.frame.size = size
+
+                preferredContentSize = size
+                
+            }
+        }
+        
         public override func loadView() {
             view = scrollView
         }
@@ -61,8 +77,6 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
                     contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
                     contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
                     ])
-
-//                addChild(contentController)
             }
         }
         
@@ -76,11 +90,12 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
     public func makeUIViewController(context: Context) -> Controller {
         let controller = Controller()
         controller.setup(for: content, refreshAction: refreshAction)
+        controller.update()
         return controller
     }
     
-    public func updateUIViewController(_ uiViewController: Controller, context: Context) {
-        
+    public func updateUIViewController(_ controller: Controller, context: Context) {
+        controller.update()
     }
     
     
