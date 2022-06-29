@@ -15,7 +15,7 @@ This package provides two implementations:
 
 ## Example
 
-See `Extras/Example` for an example Xcode project which uses this package.
+See [`Extras/Example`](https://github.com/elegantchaos/RefreshableScrollView/tree/main/Extras/Example) for an example Xcode project which uses this package.
 
 ## Credits
 
