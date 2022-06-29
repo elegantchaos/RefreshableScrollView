@@ -48,9 +48,15 @@ struct ContentView: View {
     }
 }
 
+@Sendable func dummyRefreshTask() async {
+    print("refreshing")
+    try? await Task.sleep(nanoseconds: 5000000000)
+    print("done")
+}
+
 struct NuExample: View {
     var body: some View {
-        NuRefreshableScrollView() {
+        NativeRefreshableScrollView {
             LazyVStack(alignment: .center) {
                 ForEach(testItems) { item in
                     Text(item.id)
@@ -58,11 +64,7 @@ struct NuExample: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .refreshable {
-            print("refreshing")
-            try? await Task.sleep(nanoseconds: 2000000000)
-            print("done")
-        }
+        .refreshable(action: dummyRefreshTask)
     }
 }
 
@@ -75,29 +77,21 @@ struct NormalExample: View {
                 }
             }
         }
-        .refreshable {
-            print("refreshing")
-            try? await Task.sleep(nanoseconds: 2000000000)
-            print("done")
-        }
+        .refreshable(action: dummyRefreshTask)
     }
 }
 
 struct NavigationExample: View {
     var body: some View {
         NavigationView {
-            RefreshableScrollView(mode: .navigation) {
+            NativeRefreshableScrollView {
                 LazyVStack {
                     ForEach(testItems) { item in
                         Text(item.id)
                     }
                 }
             }
-            .refreshable {
-                print("refreshing")
-                sleep(2)
-                print("done")
-            }
+            .refreshable(action: dummyRefreshTask)
             .navigationTitle("Custom View")
             .foregroundColor(.primary)
             .navigationBarTitleDisplayMode(.large)
@@ -119,11 +113,7 @@ struct SearchableNavigationExample: View {
                     }
                 }
             }
-            .refreshable {
-                print("refreshing")
-                sleep(2)
-                print("done")
-            }
+            .refreshable(action: dummyRefreshTask)
             .searchable(text: $text)
             .navigationTitle("Custom View")
             .foregroundColor(.primary)
@@ -142,11 +132,7 @@ struct ListExample: View {
             }
         }
         .listStyle(.plain)
-        .refreshable {
-            print("refreshing")
-            sleep(2)
-            print("done")
-        }
+        .refreshable(action: dummyRefreshTask)
     }
 }
 struct ContentView_Previews: PreviewProvider {

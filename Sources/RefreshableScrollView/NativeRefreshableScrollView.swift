@@ -6,7 +6,13 @@
 import SwiftUI
 import UIKit
 
-public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresentable {
+/// Implements a ScrollView which uses the native UIScrollView to implement
+/// a refresh control.
+///
+/// This has the example of working with the proper UIRefreshControl. However,
+/// it doesn't play well with SwiftUI's NavigationView. For that scenario, use
+/// ``RefreshableScrollView`` instead.
+public struct NativeRefreshableScrollView<Content: View>: UIViewControllerRepresentable {
     @Environment(\.refresh) var refreshAction
 
     let content: Content
@@ -20,15 +26,14 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
         self.content = content()
     }
     
+    /// Internal view controller which handles the UIScrollView, and
+    /// embeds a UIHostingController in it, which contains the SwiftUI
+    /// contents of the scroll view.
     public class Controller: UIViewController, UIScrollViewDelegate {
         var contentController: UIHostingController<Content>?
         var scrollView: UIScrollView?
         
-        override public var preferredContentSize: CGSize {
-            get { contentController?.view?.intrinsicContentSize ?? super.preferredContentSize }
-            set { super.preferredContentSize = newValue }
-        }
-
+        /// Setup the UIKit views for the first time.
         func setup(for content: Content, refreshAction: RefreshAction?, showsIndicators: Bool, axes: Axis.Set) {
             
             let refreshControl = UIRefreshControl()
@@ -53,6 +58,7 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
             self.contentController = UIHostingController(rootView: content)
         }
 
+        /// Update the UIKit views to reflect the current SwiftUI state.
         func update(showsIndicators: Bool, axes: Axis.Set) {
             if let scrollView = self.scrollView, let contentController = contentController {
                 var size = contentController.view.intrinsicContentSize
@@ -64,18 +70,21 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
                 }
 
                 scrollView.contentSize = size
-                print("intrinsic \(contentController.view.intrinsicContentSize), frame \(scrollView.frame.size), used \(size)")
+                preferredContentSize = size
             }
         }
         
+        /// Clean up the UIKit views before removal.
         func cleanup() {
             scrollView?.refreshControl = nil
         }
-        
+
+        /// Load the root UIScrollView.
         public override func loadView() {
             view = scrollView
         }
 
+        /// Set up the scroll view layout contstraints and embed the UIHostingController's view.
         public override func viewDidLoad() {
             if let scrollView = self.scrollView, let contentController = contentController, let contentView = contentController.view {
                 contentView.translatesAutoresizingMaskIntoConstraints = false
@@ -97,6 +106,7 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
          }
     }
 
+    /// Create a custom UIViewController and set it up.
     public func makeUIViewController(context: Context) -> Controller {
         let controller = Controller()
         controller.setup(for: content, refreshAction: refreshAction, showsIndicators: showsIndicators, axes: axes)
@@ -104,10 +114,12 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
         return controller
     }
     
+    /// Update the custom UIViewController.
     public func updateUIViewController(_ controller: Controller, context: Context) {
         controller.update(showsIndicators: showsIndicators, axes: axes)
     }
     
+    /// Clean up the custom UIViewController.
     public static func dismantleUIViewController(_ controller: Controller, coordinator: ()) {
         controller.cleanup()
     }
