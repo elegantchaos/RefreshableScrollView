@@ -5,7 +5,10 @@
 
 import SwiftUI
 
-/// A large UIActivityView which stays visible all the time.
+/// A UIActivityIndicatorView which tries to mimick the appearance
+/// of UIRefreshControl.
+///
+/// It would be great to just be able to use UIRefreshControl directly, but it only works when attached to a UIScrollView.
 
 struct CustomActivityView: UIViewRepresentable {
     let animating: Bool
