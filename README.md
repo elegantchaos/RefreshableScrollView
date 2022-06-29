@@ -13,6 +13,10 @@ This package provides two implementations:
 
 2. An implementation which uses UIKit: `NativeRefreshableScrollView`. This uses a real UIScrollView, which contains a UIHostingController, which contains the SwiftUI content views. Doing this means that we can use `UIRefreshControl` for the activity/refresh indicator, and get the precise pull-to-refresh behaviour and appearance from UIKit. The downside is that it does not seem to play well if embedded inside a NavigationView; the positioning of the refresh control seems to change as soon as the refresh task begins, causing it to disappear, which looks rubbish. 
 
+## Example
+
+See `Extras/Example` for an example Xcode project which uses this package.
+
 ## Credits
 
 This code builds on or takes inspiration from a few examples out there, including:

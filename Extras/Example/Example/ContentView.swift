@@ -19,9 +19,9 @@ struct ContentView: View {
     
     var body: some View {
         TabView {
-            NuExample()
+            NativeExample()
                 .tabItem {
-                    Label("Nu", systemImage: "tag")
+                    Label("Native", systemImage: "tag")
                 }
 
             NormalExample()
@@ -54,7 +54,8 @@ struct ContentView: View {
     print("done")
 }
 
-struct NuExample: View {
+/// A NativeRefreshableScrollView without navigation.
+struct NativeExample: View {
     var body: some View {
         NativeRefreshableScrollView {
             LazyVStack(alignment: .center) {
@@ -68,6 +69,7 @@ struct NuExample: View {
     }
 }
 
+/// A RefreshableScrollView without navigation.
 struct NormalExample: View {
     var body: some View {
         RefreshableScrollView() {
@@ -81,10 +83,11 @@ struct NormalExample: View {
     }
 }
 
+/// A RefreshableScrollView embedded in a NavigationView.
 struct NavigationExample: View {
     var body: some View {
         NavigationView {
-            NativeRefreshableScrollView {
+            RefreshableScrollView(mode: .navigation) {
                 LazyVStack {
                     ForEach(testItems) { item in
                         Text(item.id)
@@ -101,6 +104,7 @@ struct NavigationExample: View {
 }
 
 
+/// A RefreshableScrollView embedded in a searchable NavigationView.
 struct SearchableNavigationExample: View {
     @State var text = ""
     
@@ -123,6 +127,7 @@ struct SearchableNavigationExample: View {
     }
 }
 
+/// A standard SwiftUI refreshable List
 struct ListExample: View {
     var body: some View
     {
