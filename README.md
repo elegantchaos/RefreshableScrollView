@@ -17,6 +17,12 @@ This package provides two implementations:
 
 See [`Extras/Example`](https://github.com/elegantchaos/RefreshableScrollView/tree/main/Extras/Example) for an example Xcode project which uses this package.
 
+## Related
+
+My [FastList](https://github.com/elegantchaos/FastList) package is a client of this package. FastList is intended as a replacement for SwiftUI's native `List`,
+in situations where you have a large number of items and SwiftUI performance struggles (because of the fancy
+animations that it tries to do). 
+
 ## Credits
 
 This code builds on or takes inspiration from a few examples out there, including:
