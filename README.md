@@ -18,6 +18,6 @@ This package provides two implementations:
 This code builds on or takes inspiration from a few examples out there, including:
  
 - [SwiftUI Lab](https://swiftui-lab.com/scrollview-pull-to-refresh/) for hints on a good SwiftUI implementation
-- Thanks to [Jeremy Fuellert](https://gist.github.com/jfuellert/67e91df63394d7c9b713419ed8e2beb7) for hints on a good UIKit implementation.
+- [Jeremy Fuellert](https://gist.github.com/jfuellert/67e91df63394d7c9b713419ed8e2beb7) for hints on a good UIKit implementation.
 
 Thanks to these and others for showing the way.
