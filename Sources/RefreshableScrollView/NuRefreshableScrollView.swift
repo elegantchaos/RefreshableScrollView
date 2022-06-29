@@ -83,12 +83,9 @@ public struct NuRefreshableScrollView<Content: View>: UIViewControllerRepresenta
 
                 NSLayoutConstraint.activate([
                     contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-                    contentView.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
-                    contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
                     contentView.centerXAnchor.constraint(equalTo: scrollView.centerXAnchor),
-//                    contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
                     contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-//                    contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+                    contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
                     ])
             }
         }

@@ -50,30 +50,18 @@ struct ContentView: View {
 
 struct NuExample: View {
     var body: some View {
-        HStack {
-            Text("<")
-                .background(Color.red)
-
-            Spacer()
-            
-            NuRefreshableScrollView() {
-                LazyVStack(alignment: .center) {
-                    ForEach(testItems) { item in
-                        Text(item.id)
-                    }
+        NuRefreshableScrollView() {
+            LazyVStack(alignment: .center) {
+                ForEach(testItems) { item in
+                    Text(item.id)
                 }
-                .frame(maxWidth: .infinity)
             }
-            .refreshable {
-                print("refreshing")
-                try? await Task.sleep(nanoseconds: 2000000000)
-                print("done")
-            }
-
-            Spacer()
-
-            Text(">")
-                .background(Color.red)
+            .frame(maxWidth: .infinity)
+        }
+        .refreshable {
+            print("refreshing")
+            try? await Task.sleep(nanoseconds: 2000000000)
+            print("done")
         }
     }
 }
