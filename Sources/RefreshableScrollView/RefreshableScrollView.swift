@@ -45,21 +45,28 @@ public struct RefreshableScrollView<Content: View>: View {
     }
     
     public var body: some View {
+        let needFakeActivityView = !ProcessInfo.processInfo.isOperatingSystemAtLeast(.init(majorVersion: 16, minorVersion: 0, patchVersion: 0))
         state.action = isSearching ? nil : refreshAction
         return VStack {
-            ScrollView(isSearching ? [] : [axes], showsIndicators: showsIndicators) {
-                ZStack(alignment: .top) {
-                    BoundsReaderView(state: state, mode: .moving)
-                        .background(Color.red)
+            if needFakeActivityView {
+                ScrollView(isSearching ? [] : [axes], showsIndicators: showsIndicators) {
+                    ZStack(alignment: .top) {
+                        BoundsReaderView(state: state, mode: .moving)
+                            .background(Color.red)
 
-                    self.content.alignmentGuide(.top, computeValue: { _ in state.alignmentOffset})
-                    
-                    IndicatorView(state: state)
+                        self.content.alignmentGuide(.top, computeValue: { _ in state.alignmentOffset})
+                        
+                        IndicatorView(state: state)
+                    }
+                }
+                .background(
+                    BoundsReaderView(state: state, mode: .fixed)
+                )
+            } else {
+                ScrollView(isSearching ? [] : [axes], showsIndicators: showsIndicators) {
+                    self.content
                 }
             }
-            .background(
-                BoundsReaderView(state: state, mode: .fixed)
-            )
         }
     }
 }
