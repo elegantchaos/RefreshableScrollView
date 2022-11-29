@@ -63,7 +63,7 @@ public struct RefreshableScrollView<Content: View>: View {
                     BoundsReaderView(state: state, mode: .fixed)
                 )
             } else {
-                ScrollView(isSearching ? [] : [axes], showsIndicators: showsIndicators) {
+                ScrollView([axes], showsIndicators: showsIndicators) {
                     self.content
                 }
             }
